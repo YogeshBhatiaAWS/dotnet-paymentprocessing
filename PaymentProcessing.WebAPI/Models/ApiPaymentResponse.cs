@@ -1,90 +1,71 @@
 using System;
-using System.Runtime.Serialization;
-using PaymentProcessing.Core.Models;
+using Newtonsoft.Json;
 
 namespace PaymentProcessing.WebAPI.Models
 {
     /// <summary>
-    /// API model for payment responses
+    /// Payment response model for API
     /// </summary>
-    [DataContract]
     public class ApiPaymentResponse
     {
-        [DataMember]
+        /// <summary>
+        /// Unique transaction identifier
+        /// </summary>
+        [JsonProperty("transactionId")]
         public string TransactionId { get; set; }
 
-        [DataMember]
+        /// <summary>
+        /// Payment status (Approved, Declined, Error)
+        /// </summary>
+        [JsonProperty("status")]
         public string Status { get; set; }
 
-        [DataMember]
-        public string AuthorizationCode { get; set; }
-
-        [DataMember]
-        public string ResponseMessage { get; set; }
-
-        [DataMember]
-        public decimal ProcessedAmount { get; set; }
-
-        [DataMember]
-        public DateTime ProcessedDateTime { get; set; }
-
-        [DataMember]
-        public string ProcessorTransactionId { get; set; }
-
-        [DataMember]
-        public bool IsSuccessful { get; set; }
-
-        [DataMember]
-        public string ErrorCode { get; set; }
-
-        [DataMember]
-        public string ErrorMessage { get; set; }
+        /// <summary>
+        /// Payment amount
+        /// </summary>
+        [JsonProperty("amount")]
+        public decimal Amount { get; set; }
 
         /// <summary>
-        /// Creates API response from core payment response
+        /// Currency code
         /// </summary>
-        public static ApiPaymentResponse FromPaymentResponse(PaymentResponse response)
-        {
-            return new ApiPaymentResponse
-            {
-                TransactionId = response.TransactionId,
-                Status = response.Status.ToString(),
-                AuthorizationCode = response.AuthorizationCode,
-                ResponseMessage = response.ResponseMessage,
-                ProcessedAmount = response.ProcessedAmount,
-                ProcessedDateTime = response.ProcessedDateTime,
-                ProcessorTransactionId = response.ProcessorTransactionId,
-                IsSuccessful = response.IsSuccessful,
-                ErrorCode = response.ErrorCode,
-                ErrorMessage = response.ErrorMessage
-            };
-        }
-    }
+        [JsonProperty("currency")]
+        public string Currency { get; set; }
 
-    /// <summary>
-    /// API model for error responses
-    /// </summary>
-    [DataContract]
-    public class ApiErrorResponse
-    {
-        [DataMember]
-        public string Error { get; set; }
-
-        [DataMember]
+        /// <summary>
+        /// Response message
+        /// </summary>
+        [JsonProperty("message")]
         public string Message { get; set; }
 
-        [DataMember]
-        public DateTime Timestamp { get; set; }
+        /// <summary>
+        /// Error code (if applicable)
+        /// </summary>
+        [JsonProperty("errorCode")]
+        public string ErrorCode { get; set; }
 
-        public ApiErrorResponse()
-        {
-            Timestamp = DateTime.Now;
-        }
+        /// <summary>
+        /// Processing timestamp
+        /// </summary>
+        [JsonProperty("processedAt")]
+        public DateTime ProcessedAt { get; set; }
 
-        public ApiErrorResponse(string error, string message) : this()
-        {
-            Error = error;
-            Message = message;
-        }
+        /// <summary>
+        /// Authorization code (for approved transactions)
+        /// </summary>
+        [JsonProperty("authorizationCode")]
+        public string AuthorizationCode { get; set; }
+
+        /// <summary>
+        /// Reference number
+        /// </summary>
+        [JsonProperty("referenceNumber")]
+        public string ReferenceNumber { get; set; }
+
+        /// <summary>
+        /// Merchant identifier
+        /// </summary>
+        [JsonProperty("merchantId")]
+        public string MerchantId { get; set; }
     }
 }

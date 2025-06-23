@@ -1,110 +1,51 @@
-using System;
 using System.ComponentModel.DataAnnotations;
-using PaymentProcessing.Core.Models;
 
 namespace PaymentProcessing.Web.Models
 {
-    /// <summary>
-    /// View model for payment processing forms
-    /// </summary>
     public class PaymentViewModel
     {
         [Required(ErrorMessage = "Amount is required")]
-        [Range(0.01, 999999.99, ErrorMessage = "Amount must be between $0.01 and $999,999.99")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than 0")]
+        [Display(Name = "Amount")]
         public decimal Amount { get; set; }
 
         [Required(ErrorMessage = "Currency is required")]
-        public string Currency { get; set; }
+        [StringLength(3, MinimumLength = 3, ErrorMessage = "Currency must be 3 characters")]
+        [Display(Name = "Currency")]
+        public string Currency { get; set; } = "USD";
 
         [Required(ErrorMessage = "Card number is required")]
-        [StringLength(19, MinimumLength = 13, ErrorMessage = "Card number must be between 13 and 19 digits")]
+        [CreditCard(ErrorMessage = "Please enter a valid credit card number")]
+        [Display(Name = "Card Number")]
         public string CardNumber { get; set; }
 
-        [Required(ErrorMessage = "Card holder name is required")]
-        [StringLength(100, ErrorMessage = "Card holder name cannot exceed 100 characters")]
+        [Required(ErrorMessage = "Cardholder name is required")]
+        [StringLength(100, MinimumLength = 2, ErrorMessage = "Cardholder name must be between 2 and 100 characters")]
+        [Display(Name = "Cardholder Name")]
         public string CardHolderName { get; set; }
 
         [Required(ErrorMessage = "Expiry month is required")]
         [Range(1, 12, ErrorMessage = "Expiry month must be between 1 and 12")]
+        [Display(Name = "Expiry Month")]
         public int ExpiryMonth { get; set; }
 
         [Required(ErrorMessage = "Expiry year is required")]
-        [Range(2025, 2035, ErrorMessage = "Expiry year must be between 2025 and 2035")]
+        [Range(2024, 2050, ErrorMessage = "Expiry year must be between 2024 and 2050")]
+        [Display(Name = "Expiry Year")]
         public int ExpiryYear { get; set; }
 
         [Required(ErrorMessage = "CVV is required")]
         [StringLength(4, MinimumLength = 3, ErrorMessage = "CVV must be 3 or 4 digits")]
+        [RegularExpression(@"^\d{3,4}$", ErrorMessage = "CVV must contain only digits")]
+        [Display(Name = "CVV")]
         public string CVV { get; set; }
 
-        [Required(ErrorMessage = "Merchant ID is required")]
-        public string MerchantId { get; set; }
-
-        public string Description { get; set; }
-
-        [Required(ErrorMessage = "Customer email is required")]
-        [EmailAddress(ErrorMessage = "Invalid email address")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address")]
+        [Display(Name = "Customer Email")]
         public string CustomerEmail { get; set; }
 
-        public string BillingAddress { get; set; }
-
-        public PaymentViewModel()
-        {
-            Currency = "USD";
-            MerchantId = "MERCHANT_001";
-        }
-
-        /// <summary>
-        /// Converts view model to payment request
-        /// </summary>
-        public PaymentRequest ToPaymentRequest()
-        {
-            return new PaymentRequest
-            {
-                Amount = this.Amount,
-                Currency = this.Currency,
-                MerchantId = this.MerchantId,
-                Description = this.Description,
-                CustomerEmail = this.CustomerEmail,
-                BillingAddress = this.BillingAddress,
-                CreditCard = new CreditCard
-                {
-                    CardNumber = this.CardNumber,
-                    CardHolderName = this.CardHolderName,
-                    ExpiryMonth = this.ExpiryMonth,
-                    ExpiryYear = this.ExpiryYear,
-                    CVV = this.CVV
-                }
-            };
-        }
-    }
-
-    /// <summary>
-    /// View model for payment results
-    /// </summary>
-    public class PaymentResultViewModel
-    {
-        public string TransactionId { get; set; }
-        public PaymentStatus Status { get; set; }
-        public string AuthorizationCode { get; set; }
-        public string ResponseMessage { get; set; }
-        public decimal ProcessedAmount { get; set; }
-        public DateTime ProcessedDateTime { get; set; }
-        public bool IsSuccessful { get; set; }
-        public string ErrorMessage { get; set; }
-
-        public static PaymentResultViewModel FromPaymentResponse(PaymentResponse response)
-        {
-            return new PaymentResultViewModel
-            {
-                TransactionId = response.TransactionId,
-                Status = response.Status,
-                AuthorizationCode = response.AuthorizationCode,
-                ResponseMessage = response.ResponseMessage,
-                ProcessedAmount = response.ProcessedAmount,
-                ProcessedDateTime = response.ProcessedDateTime,
-                IsSuccessful = response.IsSuccessful,
-                ErrorMessage = response.ErrorMessage
-            };
-        }
+        [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
+        [Display(Name = "Description")]
+        public string Description { get; set; }
     }
 }

@@ -1,0 +1,109 @@
+@model PaymentProcessing.Core.Models.PaymentResponse
+
+@{
+    ViewBag.Title = "Payment Result";
+    var statusClass = Model.IsSuccessful ? "success" : (Model.IsDeclined ? "warning" : "danger");
+    var statusIcon = Model.IsSuccessful ? "check-circle" : (Model.IsDeclined ? "exclamation-triangle" : "times-circle");
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-@statusClass text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-@statusIcon"></i> Payment @Model.Status.ToString()
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Transaction Details</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Transaction ID:</strong></td>
+                                <td><code>@Model.TransactionId</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Amount:</strong></td>
+                                <td>@Model.Amount.ToString("C") @Model.Currency</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td>
+                                    <span class="badge bg-@statusClass">@Model.Status.ToString()</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Processed At:</strong></td>
+                                <td>@Model.ProcessedAt.ToString("yyyy-MM-dd HH:mm:ss UTC")</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        @if (Model.IsSuccessful)
+                        {
+                            <h6>Authorization Details</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Authorization Code:</strong></td>
+                                    <td><code>@Model.AuthorizationCode</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Reference Number:</strong></td>
+                                    <td><code>@Model.ReferenceNumber</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Merchant ID:</strong></td>
+                                    <td>@Model.MerchantId</td>
+                                </tr>
+                            </table>
+                        }
+                        else
+                        {
+                            <h6>Error Information</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Error Code:</strong></td>
+                                    <td><code>@Model.ErrorCode</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Message:</strong></td>
+                                    <td>@Model.Message</td>
+                                </tr>
+                            </table>
+                        }
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Message))
+                {
+                    <div class="alert alert-@statusClass mt-3">
+                        <strong>@(Model.IsSuccessful ? "Success" : "Notice"):</strong> @Model.Message
+                    </div>
+                }
+
+                <div class="mt-4">
+                    @Html.ActionLink("Process Another Payment", "Index", "Payment", null, new { @class = "btn btn-primary" })
+                    @Html.ActionLink("Back to Home", "Index", "Home", null, new { @class = "btn btn-secondary ms-2" })
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.IsSuccessful)
+{
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-8">
+            <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle"></i> Next Steps</h6>
+                <ul class="mb-0">
+                    <li>Save your transaction ID for future reference</li>
+                    <li>A confirmation email will be sent to the customer</li>
+                    <li>You can check transaction status using the API</li>
+                    <li>Refunds can be processed through the API or console application</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+}

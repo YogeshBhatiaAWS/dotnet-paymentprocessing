@@ -1,13 +1,11 @@
 using System;
 using System.Web.Mvc;
+using PaymentProcessing.Core.Models;
 using PaymentProcessing.Core.Services;
 using PaymentProcessing.Web.Models;
 
 namespace PaymentProcessing.Web.Controllers
 {
-    /// <summary>
-    /// Controller for payment processing operations
-    /// </summary>
     public class PaymentController : Controller
     {
         private readonly IPaymentProcessor _paymentProcessor;
@@ -15,116 +13,103 @@ namespace PaymentProcessing.Web.Controllers
 
         public PaymentController()
         {
+            _paymentProcessor = new PaymentProcessor();
             _paymentValidator = new PaymentValidator();
-            _paymentProcessor = new PaymentProcessor(_paymentValidator);
         }
 
-        /// <summary>
-        /// Display payment form
-        /// </summary>
+        // GET: Payment
         public ActionResult Index()
         {
-            ViewData["Title"] = "Process Payment";
-            return View(new PaymentViewModel());
+            var model = new PaymentViewModel
+            {
+                Currency = "USD",
+                ExpiryMonth = DateTime.Now.Month,
+                ExpiryYear = DateTime.Now.Year
+            };
+            return View(model);
         }
 
-        /// <summary>
-        /// Process payment form submission
-        /// </summary>
+        // POST: Payment/Process
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Process(PaymentViewModel model)
         {
             try
             {
                 if (!ModelState.IsValid)
                 {
-                    ViewData["Title"] = "Process Payment";
-                    ViewData["Error"] = "Please correct the errors below.";
                     return View("Index", model);
                 }
 
                 // Convert view model to payment request
-                var paymentRequest = model.ToPaymentRequest();
+                var paymentRequest = new PaymentRequest
+                {
+                    Amount = model.Amount,
+                    Currency = model.Currency ?? "USD",
+                    CardNumber = model.CardNumber?.Replace(" ", ""),
+                    CardHolderName = model.CardHolderName,
+                    ExpiryMonth = model.ExpiryMonth,
+                    ExpiryYear = model.ExpiryYear,
+                    CVV = model.CVV,
+                    MerchantId = "MERCHANT_001",
+                    CustomerEmail = model.CustomerEmail,
+                    Description = model.Description
+                };
+
+                // Validate the payment request
+                var validationResult = _paymentValidator.ValidatePayment(paymentRequest);
+                if (!validationResult.IsValid)
+                {
+                    ModelState.AddModelError("", validationResult.ErrorMessage);
+                    return View("Index", model);
+                }
 
                 // Process the payment
-                var paymentResponse = _paymentProcessor.ProcessPayment(paymentRequest);
+                var response = _paymentProcessor.ProcessPayment(paymentRequest);
 
-                // Convert to result view model
-                var resultModel = PaymentResultViewModel.FromPaymentResponse(paymentResponse);
-
-                // Store result in TempData for redirect
-                TempData["PaymentResult"] = resultModel;
-
-                return RedirectToAction("Result");
+                // Return result view
+                return View("Result", response);
             }
             catch (Exception ex)
             {
-                ViewData["Title"] = "Process Payment";
-                ViewData["Error"] = "An error occurred while processing your payment: " + ex.Message;
+                ModelState.AddModelError("", "An error occurred while processing your payment: " + ex.Message);
                 return View("Index", model);
             }
         }
 
-        /// <summary>
-        /// Display payment result
-        /// </summary>
-        public ActionResult Result()
-        {
-            var result = TempData["PaymentResult"] as PaymentResultViewModel;
-            
-            if (result == null)
-            {
-                return RedirectToAction("Index");
-            }
-
-            ViewData["Title"] = "Payment Result";
-            return View(result);
-        }
-
-        /// <summary>
-        /// Check transaction status
-        /// </summary>
+        // GET: Payment/Status/{transactionId}
         public ActionResult Status(string transactionId)
         {
-            if (string.IsNullOrEmpty(transactionId))
-            {
-                ViewData["Error"] = "Transaction ID is required";
-                return View("Index", new PaymentViewModel());
-            }
-
             try
             {
-                var response = _paymentProcessor.GetTransactionStatus(transactionId);
-                var resultModel = PaymentResultViewModel.FromPaymentResponse(response);
+                if (string.IsNullOrEmpty(transactionId))
+                {
+                    return RedirectToAction("Index");
+                }
+
+                var status = _paymentProcessor.GetTransactionStatus(transactionId);
                 
-                ViewData["Title"] = "Transaction Status";
-                return View("Result", resultModel);
+                var response = new PaymentResponse
+                {
+                    TransactionId = transactionId,
+                    Status = status,
+                    Message = $"Transaction status: {status}",
+                    ProcessedAt = DateTime.UtcNow
+                };
+
+                return View("Result", response);
             }
             catch (Exception ex)
             {
-                ViewData["Error"] = "Error retrieving transaction status: " + ex.Message;
-                return View("Index", new PaymentViewModel());
-            }
-        }
+                var errorResponse = new PaymentResponse
+                {
+                    TransactionId = transactionId,
+                    Status = PaymentStatus.Error,
+                    Message = "Error retrieving transaction status: " + ex.Message,
+                    ProcessedAt = DateTime.UtcNow
+                };
 
-        /// <summary>
-        /// Process refund
-        /// </summary>
-        [HttpPost]
-        public ActionResult Refund(string transactionId, decimal amount)
-        {
-            try
-            {
-                var response = _paymentProcessor.RefundPayment(transactionId, amount);
-                var resultModel = PaymentResultViewModel.FromPaymentResponse(response);
-                
-                TempData["PaymentResult"] = resultModel;
-                return RedirectToAction("Result");
-            }
-            catch (Exception ex)
-            {
-                ViewData["Error"] = "Error processing refund: " + ex.Message;
-                return View("Index", new PaymentViewModel());
+                return View("Result", errorResponse);
             }
         }
     }
