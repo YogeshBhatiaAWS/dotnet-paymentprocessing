@@ -1,44 +1,100 @@
 using System;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using Newtonsoft.Json;
 
 namespace PaymentProcessing.Core.Models
 {
-    /// <summary>
-    /// Represents a credit card for payment processing
-    /// </summary>
     public class CreditCard
     {
-        public string CardNumber { get; set; }
-        public string CardHolderName { get; set; }
-        public int ExpiryMonth { get; set; }
-        public int ExpiryYear { get; set; }
-        public string CVV { get; set; }
-        public string CardType { get; set; }
+        [Required]
+        [CreditCard]
+        public string Number { get; set; }
 
-        /// <summary>
-        /// Gets the masked card number for display purposes
-        /// </summary>
-        public string MaskedCardNumber
+        [Required]
+        [StringLength(100, MinimumLength = 2)]
+        public string HolderName { get; set; }
+
+        [Required]
+        [Range(1, 12)]
+        public int ExpiryMonth { get; set; }
+
+        [Required]
+        [Range(2024, 2050)]
+        public int ExpiryYear { get; set; }
+
+        [Required]
+        [StringLength(4, MinimumLength = 3)]
+        public string CVV { get; set; }
+
+        [JsonIgnore]
+        public string MaskedNumber => MaskCardNumber(Number);
+
+        [JsonIgnore]
+        public string CardType => GetCardType(Number);
+
+        [JsonIgnore]
+        public bool IsExpired => DateTime.Now > new DateTime(ExpiryYear, ExpiryMonth, DateTime.DaysInMonth(ExpiryYear, ExpiryMonth));
+
+        [JsonIgnore]
+        public bool IsValid => IsValidLuhn(Number) && !IsExpired;
+
+        private static string MaskCardNumber(string cardNumber)
         {
-            get
-            {
-                if (string.IsNullOrEmpty(CardNumber) || CardNumber.Length < 4)
-                    return "****";
-                
-                return "****-****-****-" + CardNumber.Substring(CardNumber.Length - 4);
-            }
+            if (string.IsNullOrEmpty(cardNumber) || cardNumber.Length < 4)
+                return "****";
+
+            return "****-****-****-" + cardNumber.Substring(cardNumber.Length - 4);
         }
 
-        /// <summary>
-        /// Validates if the credit card has expired
-        /// </summary>
-        public bool IsExpired
+        private static string GetCardType(string cardNumber)
         {
-            get
+            if (string.IsNullOrEmpty(cardNumber))
+                return "Unknown";
+
+            cardNumber = cardNumber.Replace(" ", "").Replace("-", "");
+
+            if (cardNumber.StartsWith("4"))
+                return "Visa";
+            if (cardNumber.StartsWith("5") || cardNumber.StartsWith("2"))
+                return "MasterCard";
+            if (cardNumber.StartsWith("3"))
+                return "American Express";
+            if (cardNumber.StartsWith("6"))
+                return "Discover";
+
+            return "Unknown";
+        }
+
+        public static bool IsValidLuhn(string cardNumber)
+        {
+            if (string.IsNullOrEmpty(cardNumber))
+                return false;
+
+            cardNumber = cardNumber.Replace(" ", "").Replace("-", "");
+
+            if (!cardNumber.All(char.IsDigit))
+                return false;
+
+            int sum = 0;
+            bool alternate = false;
+
+            for (int i = cardNumber.Length - 1; i >= 0; i--)
             {
-                var currentDate = DateTime.Now;
-                return currentDate.Year > ExpiryYear || 
-                       (currentDate.Year == ExpiryYear && currentDate.Month > ExpiryMonth);
+                int digit = int.Parse(cardNumber[i].ToString());
+
+                if (alternate)
+                {
+                    digit *= 2;
+                    if (digit > 9)
+                        digit = (digit % 10) + 1;
+                }
+
+                sum += digit;
+                alternate = !alternate;
             }
+
+            return sum % 10 == 0;
         }
     }
 }

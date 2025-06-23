@@ -1,0 +1,80 @@
+@{
+    ViewBag.Title = "Home";
+}
+
+<div class="jumbotron bg-primary text-white rounded">
+    <div class="container">
+        <h1 class="display-4">Payment Processing System</h1>
+        <p class="lead">Secure and reliable payment processing for your business needs.</p>
+        <hr class="my-4">
+        <p>Process credit card payments, manage transactions, and generate reports with our comprehensive payment solution.</p>
+        @Html.ActionLink("Process Payment", "Index", "Payment", null, new { @class = "btn btn-light btn-lg" })
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-credit-card"></i> Secure Processing
+                </h5>
+                <p class="card-text">Industry-standard encryption and security measures to protect sensitive payment data.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-line"></i> Real-time Reporting
+                </h5>
+                <p class="card-text">Comprehensive transaction reports and analytics to help you track your business performance.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-support"></i> 24/7 Support
+                </h5>
+                <p class="card-text">Round-the-clock technical support to ensure your payment processing runs smoothly.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h3>Test Card Numbers</h3>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Card Number</th>
+                        <th>Result</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>4111111111111111</code></td>
+                        <td><span class="badge bg-success">Approved</span></td>
+                        <td>Always approved for testing</td>
+                    </tr>
+                    <tr>
+                        <td><code>4111111111111119</code></td>
+                        <td><span class="badge bg-danger">Declined</span></td>
+                        <td>Always declined for testing</td>
+                    </tr>
+                    <tr>
+                        <td><code>4111111111111110</code></td>
+                        <td><span class="badge bg-warning">Error</span></td>
+                        <td>Always generates processing error</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
